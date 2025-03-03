@@ -5,6 +5,7 @@ add_executable(tests
     pointer.cpp
     string.cpp
     struct.cpp
+    visit_member.cpp
 )
 
 target_link_libraries(tests PRIVATE

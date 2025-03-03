@@ -5,12 +5,6 @@
 #include <memory>
 #include <typeindex>
 
-struct person
-{
-  int id;
-  int age{};
-};
-
 struct Base
 {
   int n = 3;
@@ -70,7 +64,7 @@ void register_type()
   factory[typeid(T)] = []() { return std::make_unique<T>(); };
 }
 
-TEST(Polymorphism, Base)
+TEST(Polymorphism, Shape)
 {
   registerFactory<Base>();
   registerFactory<Derived1>();
