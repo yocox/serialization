@@ -1,12 +1,14 @@
 #pragma once
 
 #include "typeid.h"
+#include "visit_member.h"
 
 #include <cassert>
 #include <functional>
 #include <istream>
 #include <map>
 #include <ostream>
+#include <type_traits>
 #include <typeinfo>
 
 inline std::map<std::string, std::function<void*()>> factory_;
@@ -62,6 +64,14 @@ public:
     s_ << len << ' ';
     s_.write(v.data(), len);
     s_ << ' ';
+    return *this;
+  }
+
+  template <typename T>
+    requires std::is_class_v<std::remove_cvref_t<T>> && (!std::is_same_v<std::remove_cvref_t<T>, std::string>)
+  OutputArchive& serialize(T&& v)
+  {
+    visit_members(v, [&](auto i) { this->serialize(i); });
     return *this;
   }
 

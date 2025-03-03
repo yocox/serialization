@@ -11,6 +11,8 @@ struct Any
 template <typename T, typename... Args>
 consteval auto member_count()
 {
+  static_assert(std::is_class_v<T>, "T must be a class type");
+  static_assert(sizeof...(Args) < 5, "Only support up to 4 members");
   if constexpr (requires { T{{Args{}}..., {Any{}}}; } == false) {
     return sizeof...(Args);
   }

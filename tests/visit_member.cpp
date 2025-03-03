@@ -1,6 +1,8 @@
 
 #include "visit_member.h"
 
+#include "serialize.h"
+
 #include <gtest/gtest.h>
 
 struct Point
@@ -17,4 +19,15 @@ TEST(VisitMember, VisitMembers)
   int sum = 0;
   visit_members(p, [&](auto i) { sum += i; });
   EXPECT_EQ(sum, 8);
+}
+
+TEST(VisitMember, Point)
+{
+  std::ostringstream oss;
+  OutputArchive oar(oss);
+
+  Point p;
+  oar.serialize(p);
+
+  std::cout << "s = " << oss.str() << std::endl;
 }
