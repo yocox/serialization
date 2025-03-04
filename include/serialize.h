@@ -88,8 +88,11 @@ public:
   template <typename T>
   OutputArchive& dispatch(T&& v)
   {
-    if constexpr (requires { const_cast<std::remove_cvref_t<T>&&>(v).serialize(*this); }) {
-      const_cast<std::remove_cvref_t<T>&&>(v).serialize(*this);
+    // if constexpr (requires { const_cast<std::remove_cv_t<T>>(v).serialize(*this); }) {
+    //   const_cast<std::remove_cv_t<T>>(v).serialize(*this);
+    // }
+    if constexpr (requires { v.serialize(*this); }) {
+      v.serialize(*this);
     }
     else if constexpr (requires { serialize(v); }) {
       serialize(v);

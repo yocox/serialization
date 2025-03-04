@@ -9,18 +9,20 @@ struct Base
 {
   int n = 3;
   virtual ~Base() = default;
-  template <typename Archive>
-  void serialize(Archive&& ar)
-  {
-    ar(n);
-  }
+  // template <typename Archive>
+  virtual void serialize(OutputArchive& ar) const { ar(n); }
+  virtual void serialize(InputArchive& ar) { ar(n); }
 };
 struct Derived1 : Base
 {
   int m = 5;
   virtual ~Derived1() = default;
-  template <typename Archive>
-  void serialize(Archive&& ar)
+  virtual void serialize(OutputArchive& ar) const override
+  {
+    Base::serialize(ar);
+    ar(m);
+  }
+  virtual void serialize(InputArchive& ar) override
   {
     Base::serialize(ar);
     ar(m);
@@ -30,8 +32,12 @@ struct Derived2 : Base
 {
   int k = 7;
   virtual ~Derived2() = default;
-  template <typename Archive>
-  void serialize(Archive&& ar)
+  virtual void serialize(OutputArchive& ar) const override
+  {
+    Base::serialize(ar);
+    ar(k);
+  }
+  virtual void serialize(InputArchive& ar) override
   {
     Base::serialize(ar);
     ar(k);
@@ -60,7 +66,7 @@ TEST(Polymorphism, Shape)
   std::ostringstream oss;
   OutputArchive oar(oss);
 
-  oar(b, d1, d2);
+  oar(d1, d2, b);
 
   std::cout << "s = " << oss.str() << std::endl;
 
@@ -71,7 +77,7 @@ TEST(Polymorphism, Shape)
   Base* b2 = nullptr;
   Base* b3 = nullptr;
 
-  iar(b1, b2, b3);
+  iar(b2, b3, b1);
 
   EXPECT_EQ(b1->n, 3);
   EXPECT_EQ(b2->n, 3);
