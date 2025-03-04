@@ -10,6 +10,7 @@
 #include <ostream>
 #include <type_traits>
 #include <typeinfo>
+#include <utility>
 
 inline std::map<std::string, std::function<void*()>> factory_;
 
@@ -193,7 +194,7 @@ public:
     requires std::is_class_v<std::remove_cvref_t<T>>
   InputArchive& deserialize_class(T&& v)
   {
-    visit_members(v, [&](auto i) { this->operator()(i); });
+    visit_members(std::forward<T>(v), [&](auto& i) { this->operator()(i); });
     return *this;
   }
 
@@ -210,23 +211,23 @@ public:
   template <typename T>
   InputArchive& dispatch(T&& v)
   {
-    if constexpr (requires { v.serialize(*this); }) {
-      v.serialize(*this);
+    if constexpr (requires { std::forward<T>(v).serialize(*this); }) {
+      std::forward<T>(v).serialize(*this);
     }
-    else if constexpr (requires { serialize(v); }) {
-      serialize(v);
+    else if constexpr (requires { serialize(std::forward<T>(v)); }) {
+      serialize(std::forward<T>(v));
     }
     else if constexpr (std::is_pointer_v<std::decay_t<T>>) {
-      deserialize_pointer(v);
+      deserialize_pointer(std::forward<T>(v));
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::string>) {
-      deserialize_string(v);
+      deserialize_string(std::forward<T>(v));
     }
     else if constexpr (std::is_class_v<std::remove_cvref_t<T>>) {
       deserialize_class(std::forward<T>(v));
     }
     else if constexpr (std::is_arithmetic_v<std::remove_cvref_t<T>>) {
-      deserialize_primitive(v);
+      deserialize_primitive(std::forward<T>(v));
     }
     else {
       static_assert(std::false_type::value, "No matching deserialization function found");
@@ -238,10 +239,10 @@ public:
   InputArchive& operator()(T&& v, Args&&... args)
   {
     if constexpr (sizeof...(args) == 0) {
-      return this->dispatch(v);
+      return this->dispatch(std::forward<T>(v));
     }
     else {
-      this->dispatch(v);
+      this->dispatch(std::forward<T>(v));
       return this->operator()(std::forward<Args>(args)...);
     }
   }

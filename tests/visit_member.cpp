@@ -30,4 +30,13 @@ TEST(VisitMember, Point)
   oar(p);
 
   std::cout << "s = " << oss.str() << std::endl;
+
+  std::istringstream iss(oss.str());
+  InputArchive iar(iss);
+
+  Point p2{7, 9};
+  iar(p2);
+
+  EXPECT_EQ(p.x, p2.x);
+  EXPECT_EQ(p.y, p2.y);
 }
