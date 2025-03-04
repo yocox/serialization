@@ -1,7 +1,6 @@
 
-#include "visit_member.h"
-
 #include "serialize.h"
+#include "visit_member.h"
 
 #include <gtest/gtest.h>
 

@@ -1,11 +1,11 @@
 find_package(GTest REQUIRED)
 
 add_executable(tests
-    arithmetic.cpp
-    pointer.cpp
-    string.cpp
-    struct.cpp
-    visit_member.cpp
+    test_arithmetic.cpp
+    test_pointer.cpp
+    test_string.cpp
+    test_struct.cpp
+    test_visit_member.cpp
 )
 
 target_link_libraries(tests PRIVATE

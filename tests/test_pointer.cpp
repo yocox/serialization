@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>
 
 #include <sstream>
-#include <type_traits>
 #include <typeindex>
 
 struct Node

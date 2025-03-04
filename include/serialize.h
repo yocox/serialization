@@ -1,6 +1,5 @@
 #pragma once
 
-#include "typeid.h"
 #include "visit_member.h"
 
 #include <cassert>
