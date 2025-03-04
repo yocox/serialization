@@ -16,7 +16,7 @@ TEST(VisitMember, VisitMembers)
 {
   Point p;
   int sum = 0;
-  visit_members(p, [&](auto i) { sum += i; });
+  visit_members(p, [&](auto x, int y) { sum += x + y; });
   EXPECT_EQ(sum, 8);
 }
 

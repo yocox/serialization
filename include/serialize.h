@@ -71,7 +71,7 @@ public:
     requires std::is_class_v<std::remove_cvref_t<T>>
   OutputArchive& serialize_class(T&& v)
   {
-    visit_members(v, [&](auto i) { this->operator()(i); });
+    visit_members(std::forward<T>(v), [&](auto&&... ms) { this->operator()(std::forward<decltype(ms)>(ms)...); });
     return *this;
   }
 
@@ -91,23 +91,23 @@ public:
     // if constexpr (requires { const_cast<std::remove_cv_t<T>>(v).serialize(*this); }) {
     //   const_cast<std::remove_cv_t<T>>(v).serialize(*this);
     // }
-    if constexpr (requires { v.serialize(*this); }) {
-      v.serialize(*this);
+    if constexpr (requires { std::forward<T>(v).serialize(*this); }) {
+      std::forward<T>(v).serialize(*this);
     }
-    else if constexpr (requires { serialize(v); }) {
-      serialize(v);
+    else if constexpr (requires { serialize(std::forward<T>(v)); }) {
+      serialize(std::forward<T>(v));
     }
     else if constexpr (std::is_pointer_v<std::decay_t<T>>) {
-      serialize_pointer(v);
+      serialize_pointer(std::forward<T>(v));
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::string>) {
-      serialize_string(v);
+      serialize_string(std::forward<T>(v));
     }
     else if constexpr (std::is_class_v<std::remove_cvref_t<T>>) {
       serialize_class(std::forward<T>(v));
     }
     else if constexpr (std::is_arithmetic_v<std::remove_cvref_t<T>>) {
-      serialize_primitive(v);
+      serialize_primitive(std::forward<T>(v));
     }
     else {
       static_assert(std::false_type::value, "No matching serialization function found");
@@ -119,10 +119,10 @@ public:
   OutputArchive& operator()(T&& v, Args&&... args)
   {
     if constexpr (sizeof...(args) == 0) {
-      return this->dispatch(v);
+      return this->dispatch(std::forward<T>(v));
     }
     else {
-      this->dispatch(v);
+      this->dispatch(std::forward<T>(v));
       return this->operator()(std::forward<Args>(args)...);
     }
   }
@@ -193,7 +193,7 @@ public:
     requires std::is_class_v<std::remove_cvref_t<T>>
   InputArchive& deserialize_class(T&& v)
   {
-    visit_members(std::forward<T>(v), [&](auto& i) { this->operator()(i); });
+    visit_members(std::forward<T>(v), [&](auto&&... ms) { this->operator()(std::forward<decltype(ms)>(ms)...); });
     return *this;
   }
 
