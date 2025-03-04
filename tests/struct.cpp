@@ -12,12 +12,12 @@ struct Base
   template <typename Archive>
   void serialize(Archive& ar) const
   {
-    ar.serialize(n);
+    ar(n);
   }
   template <typename Archive>
   void deserialize(Archive& ar)
   {
-    ar.deserialize(n);
+    ar(n);
   }
 };
 struct Derived1 : Base
@@ -28,7 +28,7 @@ struct Derived1 : Base
   void serialize(Archive& ar) const
   {
     Base::serialize(ar);
-    ar.serialize(m);
+    ar(m);
   }
   template <typename Archive>
   void deserialize(Archive& ar)
@@ -45,7 +45,7 @@ struct Derived2 : Base
   void serialize(Archive& ar) const
   {
     Base::serialize(ar);
-    ar.serialize(k);
+    ar(k);
   }
   template <typename Archive>
   void deserialize(Archive& ar)
@@ -77,9 +77,9 @@ TEST(Polymorphism, Shape)
   std::ostringstream oss;
   OutputArchive oar(oss);
 
-  oar.serialize(b);
-  oar.serialize(d1);
-  oar.serialize(d2);
+  oar(b);
+  oar(d1);
+  oar(d2);
 
   std::cout << "s = " << oss.str() << std::endl;
 
@@ -90,9 +90,9 @@ TEST(Polymorphism, Shape)
   Base* b2 = nullptr;
   Base* b3 = nullptr;
 
-  iar.deserialize(b1);
-  iar.deserialize(b2);
-  iar.deserialize(b3);
+  iar(b1);
+  iar(b2);
+  iar(b3);
 
   EXPECT_EQ(b1->n, 3);
   EXPECT_EQ(b2->n, 3);

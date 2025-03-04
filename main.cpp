@@ -13,9 +13,9 @@ struct Person
 
   OutputArchive& serialize(OutputArchive& ar) const
   {
-    ar.serialize(name);
-    ar.serialize(age);
-    ar.serialize(gender);
+    ar(name);
+    ar(age);
+    ar(gender);
     return ar;
   }
   std::istream& deserialize(std::istream& in)

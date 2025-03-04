@@ -29,7 +29,7 @@ public:
 
   template <typename T>
     requires std::is_arithmetic_v<T>
-  OutputArchive& serialize(const T& v)
+  OutputArchive& serialize_primitive(const T& v)
   {
     // s_.write(reinterpret_cast<const char*>(&v), sizeof(v));
     s_ << v << ' ';
@@ -37,7 +37,7 @@ public:
   }
 
   template <typename T>
-  OutputArchive& serialize(const T* const& p)
+  OutputArchive& serialize_pointer(const T* const& p)
   {
     if (p == nullptr) {
       int null = -1;
@@ -50,13 +50,13 @@ public:
         ptr_map_[p] = ptr_map_.size();
       }
       s_ << ptr_map_[p] << ' ';
-      this->serialize(name);
-      p->serialize(*this);
+      this->operator()(name);
+      this->operator()(*p);
     }
     return *this;
   }
 
-  OutputArchive& serialize(const std::string& v)
+  OutputArchive& serialize_string(const std::string& v)
   {
     // write size first, then the string
     int len = v.size();
@@ -68,11 +68,60 @@ public:
   }
 
   template <typename T>
-    requires std::is_class_v<std::remove_cvref_t<T>> && (!std::is_same_v<std::remove_cvref_t<T>, std::string>)
-  OutputArchive& serialize(T&& v)
+    requires std::is_class_v<std::remove_cvref_t<T>>
+  OutputArchive& serialize_class(T&& v)
   {
-    visit_members(v, [&](auto i) { this->serialize(i); });
+    visit_members(v, [&](auto i) { this->operator()(i); });
     return *this;
+  }
+
+  /// @brief Dispatch to different serialize function based on the type of v
+  /// @param v
+  /// @return
+  /// Use the following priority to find the correct serialize function:
+  /// 1. If v.serialize(OutputArchive&) exists, call it
+  /// 2. If serialize(v) exists, call it
+  /// 3. If v is a pointer, call serialize_pointer(const T* const&)
+  /// 4. If v is a string, call serialize_string(const std::string&)
+  /// 5. If v is a class, call serialize_class(T&&)
+  /// 6. If v is a primitive, call serialize_primitive(const T&)
+  template <typename T>
+  OutputArchive& dispatch(T&& v)
+  {
+    if constexpr (requires { v.serialize(*this); }) {
+      v.serialize(*this);
+    }
+    else if constexpr (requires { serialize(v); }) {
+      serialize(v);
+    }
+    else if constexpr (std::is_pointer_v<std::decay_t<T>>) {
+      serialize_pointer(v);
+    }
+    else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::string>) {
+      serialize_string(v);
+    }
+    else if constexpr (std::is_class_v<std::remove_cvref_t<T>>) {
+      serialize_class(std::forward<T>(v));
+    }
+    else if constexpr (std::is_arithmetic_v<std::remove_cvref_t<T>>) {
+      serialize_primitive(v);
+    }
+    else {
+      static_assert(std::false_type::value, "No matching serialization function found");
+    }
+    return *this;
+  }
+
+  template <typename T, typename... Args>
+  OutputArchive& operator()(T&& v, Args&&... args)
+  {
+    if constexpr (sizeof...(args) == 0) {
+      return this->dispatch(v);
+    }
+    else {
+      this->dispatch(v);
+      return this->operator()(std::forward<Args>(args)...);
+    }
   }
 
 private:
@@ -91,11 +140,8 @@ public:
   {}
 
   template <typename T>
-  InputArchive& deserialize(const T& v);
-
-  template <typename T>
     requires std::is_arithmetic_v<T>
-  InputArchive& deserialize(T& v)
+  InputArchive& deserialize_primitive(T& v)
   {
     // s_.read(reinterpret_cast<char*>(&v), sizeof(v));
     s_ >> v;
@@ -104,7 +150,7 @@ public:
     return *this;
   }
 
-  InputArchive& deserialize(std::string& v)
+  InputArchive& deserialize_string(std::string& v)
   {
     // read size first, then the string
     int len;
@@ -119,25 +165,82 @@ public:
   }
 
   template <typename T>
-  InputArchive& deserialize(T*& p)
+  InputArchive& deserialize_pointer(T*& p)
   {
     int ptr_id;
-    this->deserialize(ptr_id);
+    this->operator()(ptr_id);
     if (ptr_id == -1) {
       p = nullptr;
       return *this;
     }
     std::string name;
-    this->deserialize(name);
+    this->operator()(name);
     if (ptr_id_to_obj_.size() == ptr_id) {
       p = static_cast<T*>(factory_[name]());
       ptr_id_to_obj_.push_back(p);
-      p->deserialize(*this);
+      this->operator()(*p);
     }
     else {
       p = static_cast<T*>(ptr_id_to_obj_[ptr_id]);
     }
     return *this;
+  }
+
+  template <typename T>
+    requires std::is_class_v<std::remove_cvref_t<T>>
+  InputArchive& deserialize_class(T&& v)
+  {
+    visit_members(v, [&](auto i) { this->operator()(i); });
+    return *this;
+  }
+
+  /// @brief Dispatch to different serialize function based on the type of v
+  /// @param v
+  /// @return
+  /// Use the following priority to find the correct serialize function:
+  /// 1. If v.serialize(InputArchive&) exists, call it
+  /// 2. If serialize(v) exists, call it
+  /// 3. If v is a pointer, call serialize_pointer(const T* const&)
+  /// 4. If v is a string, call serialize_string(const std::string&)
+  /// 5. If v is a class, call serialize_class(T&&)
+  /// 6. If v is a primitive, call serialize_primitive(const T&)
+  template <typename T>
+  InputArchive& dispatch(T&& v)
+  {
+    if constexpr (requires { v.deserialize(*this); }) {
+      v.deserialize(*this);
+    }
+    else if constexpr (requires { deserialize(v); }) {
+      deserialize(v);
+    }
+    else if constexpr (std::is_pointer_v<std::decay_t<T>>) {
+      deserialize_pointer(v);
+    }
+    else if constexpr (std::is_same_v<std::remove_cvref_t<T>, std::string>) {
+      deserialize_string(v);
+    }
+    else if constexpr (std::is_class_v<std::remove_cvref_t<T>>) {
+      deserialize_class(std::forward<T>(v));
+    }
+    else if constexpr (std::is_arithmetic_v<std::remove_cvref_t<T>>) {
+      deserialize_primitive(v);
+    }
+    else {
+      static_assert(std::false_type::value, "No matching deserialization function found");
+    }
+    return *this;
+  }
+
+  template <typename T, typename... Args>
+  InputArchive& operator()(T&& v, Args&&... args)
+  {
+    if constexpr (sizeof...(args) == 0) {
+      return this->dispatch(v);
+    }
+    else {
+      this->dispatch(v);
+      return this->operator()(std::forward<Args>(args)...);
+    }
   }
 
 private:

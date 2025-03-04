@@ -27,7 +27,7 @@ TEST(VisitMember, Point)
   OutputArchive oar(oss);
 
   Point p;
-  oar.serialize(p);
+  oar(p);
 
   std::cout << "s = " << oss.str() << std::endl;
 }

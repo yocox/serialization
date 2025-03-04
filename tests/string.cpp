@@ -8,12 +8,12 @@ TEST(StdType, String)
   std::ostringstream oss;
   OutputArchive oar(oss);
   std::string v = "abcdef";
-  oar.serialize(v);
+  oar(v);
   v = "xyz";
 
   std::istringstream iss(oss.str());
   InputArchive iar(iss);
-  iar.deserialize(v);
+  iar(v);
 
   EXPECT_EQ(v, "abcdef");
 }

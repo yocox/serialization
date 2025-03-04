@@ -14,15 +14,15 @@ struct Node
   template <typename Archive>
   void serialize(Archive& ar) const
   {
-    ar.serialize(data);
-    ar.serialize(next);
+    ar(data);
+    ar(next);
   }
 
   template <typename Archive>
   void deserialize(Archive& ar)
   {
-    ar.deserialize(data);
-    ar.deserialize(next);
+    ar(data);
+    ar(next);
   }
 };
 
@@ -35,13 +35,13 @@ TEST(StdType, Pointer)
   std::ostringstream oss;
   OutputArchive oar(oss);
 
-  oar.serialize(&n2);
+  oar(&n2);
   std::cout << "s = " << oss.str() << std::endl;
 
   std::istringstream iss(oss.str());
   InputArchive iar(iss);
   Node* n3 = nullptr;
-  iar.deserialize(n3);
+  iar(n3);
 
   EXPECT_EQ(n3->data, 91);
   EXPECT_EQ(n3->next->data, 19);
