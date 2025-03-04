@@ -12,17 +12,9 @@ struct Node
   Node* next;
 
   template <typename Archive>
-  void serialize(Archive& ar) const
+  void serialize(Archive&& ar)
   {
-    ar(data);
-    ar(next);
-  }
-
-  template <typename Archive>
-  void deserialize(Archive& ar)
-  {
-    ar(data);
-    ar(next);
+    ar(data, next);
   }
 };
 

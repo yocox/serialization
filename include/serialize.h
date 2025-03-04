@@ -88,8 +88,8 @@ public:
   template <typename T>
   OutputArchive& dispatch(T&& v)
   {
-    if constexpr (requires { v.serialize(*this); }) {
-      v.serialize(*this);
+    if constexpr (requires { const_cast<std::remove_cvref_t<T>&&>(v).serialize(*this); }) {
+      const_cast<std::remove_cvref_t<T>&&>(v).serialize(*this);
     }
     else if constexpr (requires { serialize(v); }) {
       serialize(v);
@@ -207,11 +207,11 @@ public:
   template <typename T>
   InputArchive& dispatch(T&& v)
   {
-    if constexpr (requires { v.deserialize(*this); }) {
-      v.deserialize(*this);
+    if constexpr (requires { v.serialize(*this); }) {
+      v.serialize(*this);
     }
-    else if constexpr (requires { deserialize(v); }) {
-      deserialize(v);
+    else if constexpr (requires { serialize(v); }) {
+      serialize(v);
     }
     else if constexpr (std::is_pointer_v<std::decay_t<T>>) {
       deserialize_pointer(v);

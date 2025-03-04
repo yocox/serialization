@@ -11,17 +11,11 @@ struct Person
   int age;
   int gender;
 
-  OutputArchive& serialize(OutputArchive& ar) const
+  template <typename Archive>
+  Archive& serialize(Archive&& ar)
   {
-    ar(name);
-    ar(age);
-    ar(gender);
+    ar(name, age, gender);
     return ar;
-  }
-  std::istream& deserialize(std::istream& in)
-  {
-    in >> name >> age >> gender;
-    return in;
   }
 };
 
