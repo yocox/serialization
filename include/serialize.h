@@ -28,7 +28,7 @@ public:
   {}
 
   template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires(std::is_class_v<T> == false)
   OutputArchive& serialize_primitive(const T& v)
   {
     // s_.write(reinterpret_cast<const char*>(&v), sizeof(v));
@@ -106,7 +106,7 @@ public:
     else if constexpr (std::is_class_v<std::remove_cvref_t<T>>) {
       serialize_class(std::forward<T>(v));
     }
-    else if constexpr (std::is_arithmetic_v<std::remove_cvref_t<T>>) {
+    else if constexpr (std::is_class_v<std::remove_cvref_t<T>> == false) {
       serialize_primitive(std::forward<T>(v));
     }
     else {
@@ -143,7 +143,7 @@ public:
   {}
 
   template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires(std::is_class_v<T> == false)
   InputArchive& deserialize_primitive(T& v)
   {
     // s_.read(reinterpret_cast<char*>(&v), sizeof(v));
@@ -225,7 +225,7 @@ public:
     else if constexpr (std::is_class_v<std::remove_cvref_t<T>>) {
       deserialize_class(std::forward<T>(v));
     }
-    else if constexpr (std::is_arithmetic_v<std::remove_cvref_t<T>>) {
+    else if constexpr (std::is_class_v<std::remove_cvref_t<T>> == false) {
       deserialize_primitive(std::forward<T>(v));
     }
     else {
